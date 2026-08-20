@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>文化祭_2-D</title>
+
+
+<style>
+
+/* =========================
+   全体
+========================= */
+
+body {
+
+    margin: 0;
+
+    padding: 20px;
+
+    background: #fed;
+
+    color: black;
+
+    font-family:
+        Arial,
+        "Noto Sans JP",
+        sans-serif;
+}
+
+
+/* =========================
+   タイトル
+========================= */
+
+h1 {
+
+    text-align: center;
+
+    margin-bottom: 20px;
+}
+
+
+/* =========================
+   現在再生中
+========================= */
+
+#nowPlaying {
+
+    text-align: center;
+
+    color: red;
+
+    margin-bottom: 25px;
+
+    font-size: 25px;
+}
+
+
+/* =========================
+   音源一覧
+========================= */
+
+.sound-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+        );
+
+    gap: 12px;
+}
+
+
+/* =========================
+   音源カード
+========================= */
+
+.sound {
+
+    background: #dff;
+
+    border:
+        1px solid #444;
+
+    border-radius: 12px;
+
+    padding: 15px;
+}
+
+
+/* =========================
+   音源名
+========================= */
+
+.sound-name {
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    margin-bottom: 10px;
+
+    text-align: center;
+}
+
+
+/* =========================
+   ボタン
+========================= */
+
+button {
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 12px;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+
+/* 再生 */
+
+.play {
+
+    width: 100%;
+
+    background: blue;
+
+    color: white;
+
+    font-weight: bold;
+}
+
+
+/* 停止 */
+
+.stop-one {
+
+    width: 100%;
+
+    margin-top: 7px;
+
+    background: white;
+
+    color: red;
+}
+
+
+/* =========================
+   全停止
+========================= */
+
+#stopAll {
+
+    width: 100%;
+
+    margin-top: 25px;
+
+    padding: 16px;
+
+    background: #c62828;
+
+    color: white;
+
+    font-weight: bold;
+
+    font-size: 30px;
+}
+
+
+/* =========================
+   音量
+========================= */
+
+.volume {
+
+    margin-top: 10px;
+
+    width: 100%;
+}
+
+
+/* =========================
+   ループ
+========================= */
+
+.loop {
+
+    margin-top: 8px;
+
+    width: 100%;
+
+    background: #333;
+
+    color: white;
+}
+
+
+/* ループON */
+
+.loop.active {
+
+    background: red;
+}
+
+
+/* =========================
+   再生中カード
+========================= */
+
+.sound.playing {
+
+    border:
+        3px solid red;
+
+    box-shadow:
+        0 0 10px
+        rgba(
+            76,
+            175,
+            80,
+            0.5
+        );
+}
+
+
+/* =========================
+   キーボード説明
+========================= */
+
+#keyboardInfo {
+
+    margin-top: 25px;
+
+    text-align: center;
+
+    color: ligth black;
+
+    font-size: 13px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+ 2-D
+</h1>
+
+
+<div id="nowPlaying">
+現在再生中の音声：なし
+</div>
+
+
+<div
+    class="sound-grid"
+    id="soundGrid">
+</div>
+
+
+<button
+    id="stopAll"
+    onclick="stopAll()">
+
+■ 全停止
+
+</button>
+
+
+<div id="keyboardInfo">
+
+数字キーを使っても再生できます。
+
+</div>
+
+
+
+<script>
+
+
+/* =================================================
+   音源設定
+================================================= */
+
+
+/*
+   ここを変更するだけで
+   音源を追加できます。
+
+   ファイル名：
+   音源1.mp3
+   音源2.mp3
+   音源3.mp3
+
+   という名前にしています。
+*/
+
+
+const sounds = [
+
+    {
+        name: "結婚式",
+        file: "1_結婚式.mp3"
+    },
+
+    {
+        name: "剣を抜く音",
+        file: "2_剣を抜く音.mp3"
+    },
+
+    {
+        name: "剣がぶつかる音",
+        file: "3_剣がぶつかる音.mp3"
+    },
+
+    {
+        name: "腕をつかむ",
+        file: "4_腕をつかむ.mp3"
+    },
+
+    {
+        name: "引きずる音",
+        file: "5_引きずる音.mp3"
+    },
+
+    {
+        name: "教会",
+        file: "6_教会.mp3"
+    },
+
+    {
+        name: "雷",
+        file: "7_雷.mp3"
+    },
+
+    {
+        name: "棺桶をずらす",
+        file: "8_棺桶をずらす.mp3"
+    },
+
+    {
+        name: "銅を切る",
+        file: "9_銅を切る.mp3"
+
+    {
+        name: "ドア",
+        file: "10_ドア.mp3"
+    },
+
+
+    {
+        name: "ビンタ",
+        file: "11_ビンタ.mp3"
+    },
+
+
+    {
+        name: "ワルツ",
+        file: "ワルツ.m4a"
+    },
+
+
+    }
+
+];
+
+
+/* =================================================
+   再生中の音源を管理
+================================================= */
+
+const playingSounds = new Map();
+
+
+/* =================================================
+   画面を作成
+================================================= */
+
+const grid =
+    document.getElementById(
+        "soundGrid"
+    );
+
+
+sounds.forEach(
+    (sound, index) => {
+
+        createSoundCard(
+            sound,
+            index
+        );
+
+    }
+);
+
+
+/* =================================================
+   音源カード作成
+================================================= */
+
+function createSoundCard(
+    sound,
+    index
+) {
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "sound";
+
+
+    card.id =
+        "sound-" + index;
+
+
+    card.innerHTML = `
+
+        <div class="sound-name">
+
+            ${sound.name}
+
+        </div>
+
+
+        <button
+            class="play"
+            onclick="playSound(${index})">
+
+            ▶ 再生
+
+        </button>
+
+
+        <button
+            class="stop-one"
+            onclick="stopSound(${index})">
+
+            ■ 停止
+
+        </button>
+
+
+        <button
+            class="loop"
+            id="loop-${index}"
+            onclick="toggleLoop(${index})">
+
+            🔁 ループ OFF
+
+        </button>
+
+
+        <input
+            class="volume"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value="1"
+            onchange="changeVolume(
+                ${index},
+                this.value
+            )">
+
+    `;
+
+
+    grid.appendChild(card);
+
+}
+
+
+/* =================================================
+   音源再生
+================================================= */
+
+function playSound(index) {
+
+
+    const sound =
+        sounds[index];
+
+
+    /*
+       同じ音源がすでに再生中なら
+       一度停止して最初から再生
+    */
+
+    stopSound(index);
+
+
+    const audio =
+        new Audio(
+            sound.file
+        );
+
+
+    audio.volume = 1;
+
+
+    audio.loop = false;
+
+
+    playingSounds.set(
+        index,
+        audio
+    );
+
+
+    /*
+       再生中表示
+    */
+
+    const card =
+        document.getElementById(
+            "sound-" + index
+        );
+
+
+    card.classList.add(
+        "playing"
+    );
+
+
+    updateNowPlaying();
+
+
+    /*
+       再生開始
+    */
+
+    audio.play()
+        .catch(
+            error => {
+
+                console.error(
+                    error
+                );
+
+                alert(
+                    "音源を再生できませんでした。"
+                    + "\n"
+                    + sound.file
+                );
+
+            }
+        );
+
+
+    /*
+       再生終了
+    */
+
+    audio.onended =
+        function() {
+
+            /*
+               ループOFFの場合
+            */
+
+            if (
+                !audio.loop
+            ) {
+
+                playingSounds.delete(
+                    index
+                );
+
+                card.classList.remove(
+                    "playing"
+                );
+
+                updateNowPlaying();
+
+            }
+
+        };
+
+}
+
+
+/* =================================================
+   個別停止
+================================================= */
+
+function stopSound(index) {
+
+
+    const audio =
+        playingSounds.get(
+            index
+        );
+
+
+    if (audio) {
+
+        audio.pause();
+
+        audio.currentTime =
+            0;
+
+        playingSounds.delete(
+            index
+        );
+
+    }
+
+
+    const card =
+        document.getElementById(
+            "sound-" + index
+        );
+
+
+    if (card) {
+
+        card.classList.remove(
+            "playing"
+        );
+
+    }
+
+
+    updateNowPlaying();
+
+}
+
+
+/* =================================================
+   全停止
+================================================= */
+
+function stopAll() {
+
+
+    playingSounds.forEach(
+        (audio, index) => {
+
+            audio.pause();
+
+            audio.currentTime =
+                0;
+
+            const card =
+                document.getElementById(
+                    "sound-" + index
+                );
+
+            card.classList.remove(
+                "playing"
+            );
+
+        }
+    );
+
+
+    playingSounds.clear();
+
+
+    updateNowPlaying();
+
+}
+
+
+/* =================================================
+   ループ切り替え
+================================================= */
+
+function toggleLoop(index) {
+
+
+    const audio =
+        playingSounds.get(
+            index
+        );
+
+
+    const button =
+        document.getElementById(
+            "loop-" + index
+        );
+
+
+    if (!audio) {
+
+        /*
+           再生していなくても
+           次回再生時にループする設定
+        */
+
+        button.classList.toggle(
+            "active"
+        );
+
+
+        if (
+            button.classList.contains(
+                "active"
+            )
+        ) {
+
+            button.textContent =
+                "🔁 ループ ON";
+
+        } else {
+
+            button.textContent =
+                "🔁 ループ OFF";
+
+        }
+
+        return;
+
+    }
+
+
+    audio.loop =
+        !audio.loop;
+
+
+    if (audio.loop) {
+
+        button.classList.add(
+            "active"
+        );
+
+        button.textContent =
+            "🔁 ループ ON";
+
+    } else {
+
+        button.classList.remove(
+            "active"
+        );
+
+        button.textContent =
+            "🔁 ループ OFF";
+
+    }
+
+}
+
+
+/* =================================================
+   音量変更
+================================================= */
+
+function changeVolume(
+    index,
+    value
+) {
+
+
+    const audio =
+        playingSounds.get(
+            index
+        );
+
+
+    if (audio) {
+
+        audio.volume =
+            Number(value);
+
+    }
+
+}
+
+
+/* =================================================
+   現在再生中表示
+================================================= */
+
+function updateNowPlaying() {
+
+
+    const display =
+        document.getElementById(
+            "nowPlaying"
+        );
+
+
+    if (
+        playingSounds.size === 0
+    ) {
+
+        display.textContent =
+            "現在再生中：なし";
+
+        return;
+
+    }
+
+
+    const names = [];
+
+
+    playingSounds.forEach(
+        (audio, index) => {
+
+            names.push(
+                sounds[index].name
+            );
+
+        }
+    );
+
+
+    display.textContent =
+        "現在再生中："
+        + names.join(" / ");
+
+}
+
+
+/* =================================================
+   キーボード操作
+================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+
+        /*
+           1～9キー
+        */
+
+        const number =
+            Number(event.key);
+
+
+        if (
+            number >= 1 &&
+            number <= 9
+        ) {
+
+            const index =
+                number - 1;
+
+
+            if (
+                sounds[index]
+            ) {
+
+                playSound(
+                    index
+                );
+
+            }
+
+        }
+
+
+        /*
+           Spaceキーで全停止
+        */
+
+        if (
+            event.code ===
+            "Space"
+        ) {
+
+            event.preventDefault();
+
+            stopAll();
+
+        }
+
+    }
+);
+
+</script>
+
+
+</body>
+
+</html>
