@@ -114,7 +114,7 @@ h1 {
 
 
 /* =========================
-   ボタン
+   ボタン共通
 ========================= */
 
 button {
@@ -131,7 +131,9 @@ button {
 }
 
 
-/* 再生 */
+/* =========================
+   再生
+========================= */
 
 .play {
 
@@ -145,7 +147,27 @@ button {
 }
 
 
-/* 停止 */
+/* =========================
+   一時停止
+========================= */
+
+.pause-one {
+
+    width: 100%;
+
+    margin-top: 7px;
+
+    background: #ff9800;
+
+    color: white;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   停止
+========================= */
 
 .stop-one {
 
@@ -209,7 +231,9 @@ button {
 }
 
 
-/* ループON */
+/* =========================
+   ループON
+========================= */
 
 .loop.active {
 
@@ -238,6 +262,17 @@ button {
 
 
 /* =========================
+   一時停止中カード
+========================= */
+
+.sound.paused {
+
+    border:
+        3px solid orange;
+}
+
+
+/* =========================
    キーボード説明
 ========================= */
 
@@ -247,7 +282,7 @@ button {
 
     text-align: center;
 
-    color: ligth black;
+    color: black;
 
     font-size: 13px;
 }
@@ -261,12 +296,14 @@ button {
 
 
 <h1>
- 2-D
+2-D
 </h1>
 
 
 <div id="nowPlaying">
-現在再生中の音声：なし
+
+現在再生中：なし
+
 </div>
 
 
@@ -287,7 +324,9 @@ button {
 
 <div id="keyboardInfo">
 
-数字キーを使っても再生できます。
+数字キー 1～9：再生　
+／　
+Space：全停止
 
 </div>
 
@@ -300,30 +339,16 @@ button {
    音源設定
 ================================================= */
 
-
-/*
-   ここを変更するだけで
-   音源を追加できます。
-
-   ファイル名：
-   音源1.mp3
-   音源2.mp3
-   音源3.mp3
-
-   という名前にしています。
-*/
-
-
 const sounds = [
 
     {
         name: "結婚式",
-        file: "1_結婚式.mp3"
+        file: "1結婚式.mp3"
     },
 
     {
         name: "剣を抜く音",
-        file: "2_剣を抜く音.mp3"
+        file: "2剣を抜く音.mp3"
     },
 
     {
@@ -337,8 +362,8 @@ const sounds = [
     },
 
     {
-        name: "引きずる音",
-        file: "5_引きずる音.mp3"
+        name: "引きずる音",
+        file: "5_引きずる音.mp3"
     },
 
     {
@@ -359,35 +384,45 @@ const sounds = [
     {
         name: "銅を切る",
         file: "9_銅を切る.mp3"
+    },
 
     {
         name: "ドア",
         file: "10_ドア.mp3"
     },
 
-
     {
         name: "ビンタ",
         file: "11_ビンタ.mp3"
     },
 
-
     {
         name: "ワルツ",
         file: "ワルツ.m4a"
-    },
-
-
     }
 
 ];
 
 
 /* =================================================
-   再生中の音源を管理
+   再生中の音源
 ================================================= */
 
 const playingSounds = new Map();
+
+
+/* =================================================
+   ループ設定
+================================================= */
+
+const loopSettings = new Map();
+
+
+/* =================================================
+   音量設定
+================================================= */
+
+const volumeSettings = new Map();
 
 
 /* =================================================
@@ -402,6 +437,16 @@ const grid =
 
 sounds.forEach(
     (sound, index) => {
+
+        loopSettings.set(
+            index,
+            false
+        );
+
+        volumeSettings.set(
+            index,
+            1
+        );
 
         createSoundCard(
             sound,
@@ -420,7 +465,6 @@ function createSoundCard(
     sound,
     index
 ) {
-
 
     const card =
         document.createElement(
@@ -455,6 +499,15 @@ function createSoundCard(
 
 
         <button
+            class="pause-one"
+            onclick="pauseSound(${index})">
+
+            ⏸ 一時停止
+
+        </button>
+
+
+        <button
             class="stop-one"
             onclick="stopSound(${index})">
 
@@ -475,6 +528,7 @@ function createSoundCard(
 
         <input
             class="volume"
+            id="volume-${index}"
             type="range"
             min="0"
             max="1"
@@ -499,29 +553,71 @@ function createSoundCard(
 
 function playSound(index) {
 
-
     const sound =
         sounds[index];
 
 
+    let audio =
+        playingSounds.get(index);
+
+
     /*
-       同じ音源がすでに再生中なら
-       一度停止して最初から再生
+       すでに音源が存在する場合
+       一時停止中なら続きから再生
     */
 
-    stopSound(index);
+    if (audio) {
+
+        audio.play()
+            .then(() => {
+
+                const card =
+                    document.getElementById(
+                        "sound-" + index
+                    );
+
+                card.classList.remove(
+                    "paused"
+                );
+
+                card.classList.add(
+                    "playing"
+                );
+
+                updateNowPlaying();
+
+            })
+            .catch(
+                error => {
+
+                    console.error(
+                        error
+                    );
+
+                }
+            );
+
+        return;
+
+    }
 
 
-    const audio =
+    /*
+       新しい音源を作成
+    */
+
+    audio =
         new Audio(
             sound.file
         );
 
 
-    audio.volume = 1;
+    audio.volume =
+        volumeSettings.get(index);
 
 
-    audio.loop = false;
+    audio.loop =
+        loopSettings.get(index);
 
 
     playingSounds.set(
@@ -530,14 +626,15 @@ function playSound(index) {
     );
 
 
-    /*
-       再生中表示
-    */
-
     const card =
         document.getElementById(
             "sound-" + index
         );
+
+
+    card.classList.remove(
+        "paused"
+    );
 
 
     card.classList.add(
@@ -549,7 +646,7 @@ function playSound(index) {
 
 
     /*
-       再生開始
+       再生
     */
 
     audio.play()
@@ -561,8 +658,7 @@ function playSound(index) {
                 );
 
                 alert(
-                    "音源を再生できませんでした。"
-                    + "\n"
+                    "音源を再生できませんでした。\n"
                     + sound.file
                 );
 
@@ -577,13 +673,7 @@ function playSound(index) {
     audio.onended =
         function() {
 
-            /*
-               ループOFFの場合
-            */
-
-            if (
-                !audio.loop
-            ) {
+            if (!audio.loop) {
 
                 playingSounds.delete(
                     index
@@ -591,6 +681,10 @@ function playSound(index) {
 
                 card.classList.remove(
                     "playing"
+                );
+
+                card.classList.remove(
+                    "paused"
                 );
 
                 updateNowPlaying();
@@ -603,11 +697,53 @@ function playSound(index) {
 
 
 /* =================================================
+   一時停止
+================================================= */
+
+function pauseSound(index) {
+
+    const audio =
+        playingSounds.get(
+            index
+        );
+
+
+    if (!audio) {
+
+        return;
+
+    }
+
+
+    audio.pause();
+
+
+    const card =
+        document.getElementById(
+            "sound-" + index
+        );
+
+
+    card.classList.remove(
+        "playing"
+    );
+
+
+    card.classList.add(
+        "paused"
+    );
+
+
+    updateNowPlaying();
+
+}
+
+
+/* =================================================
    個別停止
 ================================================= */
 
 function stopSound(index) {
-
 
     const audio =
         playingSounds.get(
@@ -641,6 +777,10 @@ function stopSound(index) {
             "playing"
         );
 
+        card.classList.remove(
+            "paused"
+        );
+
     }
 
 
@@ -655,7 +795,6 @@ function stopSound(index) {
 
 function stopAll() {
 
-
     playingSounds.forEach(
         (audio, index) => {
 
@@ -664,14 +803,24 @@ function stopAll() {
             audio.currentTime =
                 0;
 
+
             const card =
                 document.getElementById(
                     "sound-" + index
                 );
 
-            card.classList.remove(
-                "playing"
-            );
+
+            if (card) {
+
+                card.classList.remove(
+                    "playing"
+                );
+
+                card.classList.remove(
+                    "paused"
+                );
+
+            }
 
         }
     );
@@ -691,7 +840,6 @@ function stopAll() {
 
 function toggleLoop(index) {
 
-
     const audio =
         playingSounds.get(
             index
@@ -704,44 +852,30 @@ function toggleLoop(index) {
         );
 
 
-    if (!audio) {
-
-        /*
-           再生していなくても
-           次回再生時にループする設定
-        */
-
-        button.classList.toggle(
-            "active"
-        );
+    const newLoopState =
+        !loopSettings.get(index);
 
 
-        if (
-            button.classList.contains(
-                "active"
-            )
-        ) {
+    loopSettings.set(
+        index,
+        newLoopState
+    );
 
-            button.textContent =
-                "🔁 ループ ON";
 
-        } else {
+    /*
+       現在再生中なら
+       その音源にも反映
+    */
 
-            button.textContent =
-                "🔁 ループ OFF";
+    if (audio) {
 
-        }
-
-        return;
+        audio.loop =
+            newLoopState;
 
     }
 
 
-    audio.loop =
-        !audio.loop;
-
-
-    if (audio.loop) {
+    if (newLoopState) {
 
         button.classList.add(
             "active"
@@ -773,6 +907,15 @@ function changeVolume(
     value
 ) {
 
+    const volume =
+        Number(value);
+
+
+    volumeSettings.set(
+        index,
+        volume
+    );
+
 
     const audio =
         playingSounds.get(
@@ -783,7 +926,7 @@ function changeVolume(
     if (audio) {
 
         audio.volume =
-            Number(value);
+            volume;
 
     }
 
@@ -795,7 +938,6 @@ function changeVolume(
 ================================================= */
 
 function updateNowPlaying() {
-
 
     const display =
         document.getElementById(
@@ -821,12 +963,26 @@ function updateNowPlaying() {
     playingSounds.forEach(
         (audio, index) => {
 
-            names.push(
-                sounds[index].name
-            );
+            if (!audio.paused) {
+
+                names.push(
+                    sounds[index].name
+                );
+
+            }
 
         }
     );
+
+
+    if (names.length === 0) {
+
+        display.textContent =
+            "現在再生中：一時停止中";
+
+        return;
+
+    }
 
 
     display.textContent =
@@ -843,7 +999,6 @@ function updateNowPlaying() {
 document.addEventListener(
     "keydown",
     function(event) {
-
 
         /*
            1～9キー
