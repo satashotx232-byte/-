@@ -437,6 +437,40 @@ const playingSounds = new Map();
 
 
 /* =================================================
+   Web Audio API
+   音源ごとの個別音量をiPhone/iPadでも調整
+================================================= */
+
+let audioContext = null;
+
+const gainNodes = new Map();
+
+
+function getAudioContext() {
+
+    if (!audioContext) {
+
+        const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+
+            return null;
+
+        }
+
+        audioContext =
+            new AudioContextClass();
+
+    }
+
+    return audioContext;
+
+}
+
+
+/* =================================================
    ループ設定
 ================================================= */
 
@@ -559,7 +593,7 @@ function createSoundCard(
             max="1"
             step="0.01"
             value="1"
-            onchange="changeVolume(
+            oninput="changeVolume(
                 ${index},
                 this.value
             )">
@@ -584,6 +618,26 @@ function playSound(index) {
 
     let audio =
         playingSounds.get(index);
+
+
+    /*
+       iPhone / iPadでは
+       ユーザー操作時にAudioContextを再開
+    */
+
+    const context =
+        getAudioContext();
+
+
+    if (context) {
+
+        if (context.state === "suspended") {
+
+            context.resume();
+
+        }
+
+    }
 
 
     /*
@@ -637,8 +691,68 @@ function playSound(index) {
         );
 
 
-    audio.volume =
-        volumeSettings.get(index);
+    /*
+       Web Audio APIへ接続
+       GainNodeで音源ごとの音量を管理
+    */
+
+    let gainNode = null;
+
+    if (context) {
+
+        try {
+
+            const source =
+                context.createMediaElementSource(
+                    audio
+                );
+
+
+            gainNode =
+                context.createGain();
+
+
+            gainNode.gain.value =
+                volumeSettings.get(index);
+
+
+            source.connect(
+                gainNode
+            );
+
+
+            gainNode.connect(
+                context.destination
+            );
+
+
+            gainNodes.set(
+                index,
+                gainNode
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Web Audio API error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+       Web Audio APIが使えない場合の予備
+    */
+
+    if (!gainNode) {
+
+        audio.volume =
+            volumeSettings.get(index);
+
+    }
 
 
     audio.loop =
@@ -701,6 +815,10 @@ function playSound(index) {
             if (!audio.loop) {
 
                 playingSounds.delete(
+                    index
+                );
+
+                gainNodes.delete(
                     index
                 );
 
@@ -787,6 +905,10 @@ function stopSound(index) {
             index
         );
 
+        gainNodes.delete(
+            index
+        );
+
     }
 
 
@@ -852,6 +974,8 @@ function stopAll() {
 
 
     playingSounds.clear();
+
+    gainNodes.clear();
 
 
     updateNowPlaying();
@@ -942,10 +1066,31 @@ function changeVolume(
     );
 
 
+    /*
+       Web Audio APIのGainNodeで
+       音源ごとの音量を変更
+    */
+
+    const gainNode =
+        gainNodes.get(index);
+
+
+    if (gainNode) {
+
+        gainNode.gain.value =
+            volume;
+
+        return;
+
+    }
+
+
+    /*
+       GainNodeがまだない場合の予備
+    */
+
     const audio =
-        playingSounds.get(
-            index
-        );
+        playingSounds.get(index);
 
 
     if (audio) {
